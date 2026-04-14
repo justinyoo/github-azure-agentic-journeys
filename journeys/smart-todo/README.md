@@ -435,7 +435,7 @@ If the app can't reach the API, check that:
   - Monitoring with br/public:avm/ptn/azd/monitoring
   - Storage Account with br/public:avm/res/storage/storage-account
   - System-assigned managed identity on the Function App
-  - Role assignment: Cognitive Services User on AI Services
+  - Role assignment: Cognitive Services User on Microsoft Foundry
   - Azure SQL firewall: allow Azure services
   - Outputs in SCREAMING_SNAKE_CASE: API_URL, SQL_SERVER_NAME, etc.
   - azd-service-name: 'api' tag on the Function App
@@ -447,11 +447,11 @@ If the app can't reach the API, check that:
 
 1. Open `infra/main.bicep`. Does the Function App have `tags: { 'azd-service-name': 'api' }`? Without this, `azd deploy` can't find the app.
 2. Are ALL resources from AVM modules (not raw resource definitions)?
-3. Is there a role assignment giving the Function App's managed identity `Cognitive Services User` on the AI Services resource?
+3. Is there a role assignment giving the Function App's managed identity `Cognitive Services User` on the Microsoft Foundry resource?
 4. Does the SQL server have a firewall rule allowing Azure services (`0.0.0.0` start/end IP)?
 5. Are outputs in SCREAMING_SNAKE_CASE? (`API_URL`, not `apiUrl`)
 
-**💡 What you're learning:** Managed identity means the Function App authenticates to Azure SQL and AI Services without API keys or connection strings. The Bicep template creates the identity and role assignments declaratively, with no portal clicks required. This is how production Azure apps handle service-to-service auth.
+**💡 What you're learning:** Managed identity means the Function App authenticates to Azure SQL and Microsoft Foundry without API keys or connection strings. The Bicep template creates the identity and role assignments declaratively, with no portal clicks required. This is how production Azure apps handle service-to-service auth.
 
 ##### Step 2: Deploy
 
@@ -471,7 +471,14 @@ azd env set AZURE_SUBSCRIPTION_ID $(az account show --query id -o tsv)
 azd up
 ```
 
-Deployment takes ~5 minutes. If it fails, ask Copilot CLI to help diagnose:
+> ⏳ **While you wait:** Azure is provisioning your Function App, SQL Database, and Microsoft Foundry. Here's how to use the time:
+>
+> 1. Watch your resources appear in real-time. Open the [Azure Portal](https://portal.azure.com) → search for your resource group, or run `az resource list --resource-group rg-<env-name> --output table` in a separate terminal.
+> 2. Re-read your `infra/main.bicep`. Can you trace how the Function App gets access to Microsoft Foundry? (Hint: look for the managed identity and role assignment.)
+> 3. Preview what's next: open `PLAN.md` and read the Phase 3 section (iOS app). What SwiftUI components will you need?
+> 4. Ask the agent: *"/btw Explain how managed identity works in this deployment. Why don't we need API keys?"*
+
+Deployment may take several minutes. If it fails, ask Copilot CLI to help diagnose:
 
 ```
 > azd up failed with this error: [paste the error]. What's wrong?
@@ -601,7 +608,7 @@ Here's where agentic AI shows up in this journey:
 | Storage Account | Standard LRS | ~$1 |
 | **Total** | | **~$10-30/month** |
 
-Functions and AI Services scale to zero when idle, so you pay almost nothing during development. Azure SQL Basic is the floor at ~$5/month. Clean up with `azd down` when done.
+Functions and Microsoft Foundry scale to zero when idle, so you pay almost nothing during development. Azure SQL Basic is the floor at ~$5/month. Clean up with `azd down` when done.
 
 ---
 
@@ -643,7 +650,7 @@ az functionapp config appsettings list --name $(azd env get-value FUNCTION_APP_N
 
 ### Soft-deleted Cognitive Services blocks redeployment
 
-**Cause:** A previous `azd down` soft-deleted the AI Services resource. It blocks re-creation for 48 hours.
+**Cause:** A previous `azd down` soft-deleted the Microsoft Foundry resource. It blocks re-creation for 48 hours.
 
 **Fix:**
 

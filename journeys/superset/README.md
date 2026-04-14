@@ -149,8 +149,15 @@ The agent handles the entire deployment:
 2. Recommends AKS over Container Apps because it knows Superset needs init containers, shared volumes, and ConfigMap mounting
 3. Generates Bicep (Azure's infrastructure-as-code language) + Kubernetes infrastructure in `infra-superset/`
 4. Updates `azure.yaml`, registers Azure providers, sets environment variables
-5. Runs `azd up` (~15-20 minutes)
+5. Runs `azd up`
 6. Runs post-provision hooks (`kubectl apply` for Kubernetes manifests, waits for external IP)
+
+> ⏳ **While you wait:** This deployment can take awhile. AKS cluster creation alone takes several minutes. Put the time to good use:
+>
+> 1. Watch your resources appear in real-time. Open the [Azure Portal](https://portal.azure.com) → search for your resource group, or run `az resource list --resource-group rg-<env-name> --output table` in a separate terminal.
+> 2. Read the [init container pattern](#psycopg2-installation-critical) above. Why can't you just `pip install psycopg2-binary` in the main container? (Hint: read-only filesystem.)
+> 3. **Cost comparison:** This AKS deployment costs ~$200/month vs. ~$25 for n8n and ~$10 for Grafana. Open the [Cost Breakdown](#cost-breakdown) and think about when AKS is worth the premium. Always use the right tool for the right job.
+> 4. Explore the [Superset demo gallery](https://superset.apache.org/gallery) to see what kinds of dashboards you can build after deployment.
 
 You can ask follow-up questions anytime:
 

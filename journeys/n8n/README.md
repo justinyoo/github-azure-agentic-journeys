@@ -114,7 +114,15 @@ Tell the agent what you want in a single prompt:
 > Deploy n8n to Azure using Bicep and azd. Set the location to westus, generate secure passwords for all credentials, and resolve any issues that come up.
 ```
 
-The deployment takes 5+ minutes. You'll see the agent generating Bicep files, registering Azure providers, and running `azd up`. It may prompt you to confirm your Azure subscription.
+The deployment takes several minutes. You'll see the agent generating Bicep files, registering Azure providers, and running `azd up`. It may prompt you to confirm your Azure subscription.
+
+> ⏳ **While you wait:** The agent is provisioning your infrastructure. Here are some things to do while it runs:
+>
+> 1. Watch your resources appear in real-time. Open the [Azure Portal](https://portal.azure.com) → search for your resource group (`rg-<env-name>`), or run `az resource list --resource-group rg-<env-name> --output table` in a separate terminal.
+> 2. Look at the [architecture diagram](#architecture) above. Match each box to a resource appearing in the portal.
+> 3. Ask the agent: *"What's happening right now? Walk me through the deployment step by step."*
+> 4. **Quiz yourself:** Why does n8n need a startup probe with a `failureThreshold` of 30? (Hint: check [Health Probes](#health-probes) below.)
+> 5. Browse the [n8n workflow templates](https://n8n.io/workflows/) and pick one you want to try after deployment.
 
 The agent handles the entire deployment:
 
@@ -122,7 +130,7 @@ The agent handles the entire deployment:
 2. Uses Azure MCP tools to look up Bicep schemas and best practices
 3. Generates modular Bicep infrastructure in `infra-n8n/`
 4. Updates `azure.yaml`, registers Azure providers, sets environment variables
-5. Runs `azd up` (~7 minutes)
+5. Runs `azd up`
 6. Configures `WEBHOOK_URL` via post-provision hook
 
 You can ask follow-up questions anytime during or after generation:

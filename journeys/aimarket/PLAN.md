@@ -431,7 +431,7 @@ export async function sendChatMessage(messages: ChatMessage[]): Promise<string>
 
 ## Phase 3: AI Features
 
-Add semantic search and a shopping assistant. Requires Azure AI Search and Azure OpenAI services.
+Add semantic search and a shopping assistant. Requires Azure AI Search and Microsoft Foundry.
 
 ### AI Feature 1: Semantic Product Search
 
@@ -559,7 +559,7 @@ Current catalog:
 
 **Behavior:**
 - On each request, fetch all active products and inject them into the system prompt as JSON
-- Use Azure OpenAI chat completions API with `gpt-5-mini` (fallback to `gpt-4.1` if unavailable in your region)
+- Use Microsoft Foundry chat completions API with `gpt-5-mini` (fallback to `gpt-4.1` if unavailable in your region)
 - Temperature: `0.7`
 - Max tokens: `500`
 - Pass the full message history from the request (the client maintains conversation state)
@@ -599,7 +599,7 @@ The Azure Skills plugin for Copilot CLI provides MCP tools and plugin skills for
 
 ### Azure Resources
 
-Use **Azure Verified Modules (AVM)** from `br/public:avm/...` where possible. For resources that require `listKeys()` or `listCredentials()` to wire secrets into Container App env vars, use deterministic `existing` resource references with `dependsOn` on the AVM module.
+Use **Azure Verified Modules (AVM)** from `br/public:avm/...` for ALL resources. For resources that require `listKeys()` or `listCredentials()` to wire secrets into Container App env vars, use deterministic `existing` resource references with `dependsOn` on the AVM module.
 
 | Resource | Module / Approach | Purpose |
 |----------|------------------|---------|
@@ -608,21 +608,23 @@ Use **Azure Verified Modules (AVM)** from `br/public:avm/...` where possible. Fo
 | Azure AI Search | `br/public:avm/res/search/search-service` (Basic SKU — required for semantic ranking) + `existing` ref for `listAdminKeys()` | Semantic product search |
 | Container Apps Env | `br/public:avm/res/app/managed-environment` | Hosts API + frontend |
 | Container Apps (×2) | `br/public:avm/res/app/container-app` | API + web |
-| Microsoft Foundry | Raw resource (`Microsoft.CognitiveServices/accounts` with `kind: AIServices`, `allowProjectManagement: true`) + child project + model deployment | gpt-5-mini (fallback: gpt-4.1) + Foundry project. Raw because the AVM `ai-foundry` pattern module generates internal resource names we can't predict, making `listKeys()` impossible. |
+| Microsoft Foundry | `br/public:avm/ptn/ai-ml/ai-foundry` (`baseName` max 12 chars, `aiModelDeployments` array for gpt-5-mini, `aiFoundryConfiguration.disableLocalAuth: false`) | gpt-5-mini model hosting (fallback: gpt-4.1). Outputs: `aiServicesName`, `aiProjectName`. Use an `existing` ref on the AI Services account to call `listKeys()`. |
 
-**Pattern for wiring secrets:** At subscription scope, `existing` resource references cannot use `dependsOn`, so `listKeys()`/`listCredentials()` fail because the resource hasn't been created yet. **Solution: create wrapper Bicep modules** scoped at resource group level. Each wrapper calls the AVM module, then uses an `existing` ref with `dependsOn` to extract keys. The main template calls these wrappers and reads keys from their outputs. Create wrapper modules for: Container Registry (outputs loginServer, username, password), AI Search (outputs endpoint, adminKey), and AI Services (outputs endpoint, key).
+**Pattern for wiring secrets:** At subscription scope, `existing` resource references cannot use `dependsOn`, so `listKeys()`/`listCredentials()` fail because the resource hasn't been created yet. **Solution: create wrapper Bicep modules** scoped at resource group level. Each wrapper calls the AVM module, then uses an `existing` ref with `dependsOn` to extract keys. The main template calls these wrappers and reads keys from their outputs. Create wrapper modules for: Container Registry (outputs loginServer, username, password), AI Search (outputs endpoint, adminKey), and AI Services (outputs endpoint, key). For Microsoft Foundry, the AVM `ai-foundry` module outputs `aiServicesName` — use an `existing` ref on `Microsoft.CognitiveServices/accounts` with that name to call `listKeys()`.
 
 ### Bicep Requirements
 
-1. **Use AVM modules** for all resources except Microsoft Foundry (see table above for why)
+1. **Use AVM modules** for ALL resources — no raw resource definitions
 2. **Deterministic naming** — all resources named with `${abbrs.xxx}${resourceToken}` so `existing` refs can resolve
 3. **`azd-service-name` tags** on each container app (azd maps services by tag)
 4. **Output `AZURE_CONTAINER_REGISTRY_ENDPOINT`** (azd reads this for image push)
 5. **Wire AI credentials** into API container env vars via secrets using `listKeys()` / `listAdminKeys()`
 6. **Azure AI Search** — use `basic` SKU (not `free`), set `disableLocalAuth: false`, and set `semanticSearch: 'free'` to enable the semantic ranker
-7. **Microsoft Foundry** — set `disableLocalAuth: false` for key-based auth, enable system-assigned managed identity, and set `allowProjectManagement: true`
-8. **Container App startup probe** — `failureThreshold` max is 10 (not 30) when using the AVM container-app module
-9. **Soft-deleted Cognitive Services** — if a previous deployment fails or is torn down, the AI Services resource may be soft-deleted and block re-creation. Run `az cognitiveservices account list-deleted` and `az cognitiveservices account purge` before redeploying
+7. **Microsoft Foundry** — use `br/public:avm/ptn/ai-ml/ai-foundry` with `baseName` (max 12 chars), `aiModelDeployments` array for gpt-5-mini, and `aiFoundryConfiguration.disableLocalAuth: false`. Enable system-assigned managed identity on the API container app.
+8. **Managed identity for Foundry** — assign the `Cognitive Services User` role (`a97b65f3-24c7-4388-baec-2e87135dc908`) from the API container app's managed identity to the AI Services resource. This allows the API to authenticate to Microsoft Foundry without API keys.
+9. **Container App startup probe** — `failureThreshold` max is 10 (not 30) when using the AVM container-app module
+10. **Soft-deleted Cognitive Services** — if a previous deployment fails or is torn down, the AI Services resource may be soft-deleted and block re-creation. Run `az cognitiveservices account list-deleted` and `az cognitiveservices account purge` before redeploying
+11. **AI model version is region-specific** — use `az cognitiveservices model list --location <region> --query "[?model.name=='gpt-5-mini']"` to find the correct version before generating Bicep
 
 ### Deployment
 

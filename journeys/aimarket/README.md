@@ -14,7 +14,7 @@ In this agentic journey, you'll build AIMarket, a lightweight marketplace app wi
 - Build a REST API with products, orders, and users in your choice of language (Node.js, Python, .NET, or Java)
 - Build a React storefront that consumes the API
 - Add semantic product search with Azure AI Search
-- Build an AI shopping assistant with Azure OpenAI
+- Build an AI shopping assistant with Microsoft Foundry
 - Deploy the full stack to Azure Container Apps using `azd`
 
 > ⏱️ **Estimated Time**: ~2-3 hours (includes building, testing, and deploying all 4 phases)
@@ -370,7 +370,7 @@ This phase teaches two things: how to integrate Azure AI services, and how to de
 
 #### Step 1: Set up Azure AI services
 
-Phase 3 requires Azure AI Search and Azure OpenAI services. Ask Copilot CLI to help you create them, or if you already have them, set the environment variables:
+Phase 3 requires Azure AI Search and Microsoft Foundry. Ask Copilot CLI to help you create them, or if you already have them, set the environment variables:
 
 ```bash
 # Azure AI Search (create a Basic tier instance in the Azure Portal)
@@ -378,7 +378,7 @@ export AZURE_SEARCH_ENDPOINT="https://<your-search-service>.search.windows.net"
 export AZURE_SEARCH_KEY="<your-admin-key>"
 export AZURE_SEARCH_INDEX="aimarket-products"
 
-# Azure OpenAI (from your Microsoft Foundry deployment)
+# Microsoft Foundry (from your Foundry deployment)
 export AZURE_OPENAI_ENDPOINT="https://<your-resource>.openai.azure.com"
 export AZURE_OPENAI_KEY="<your-api-key>"
 export AZURE_OPENAI_DEPLOYMENT="gpt-5-mini"
@@ -387,7 +387,7 @@ export AZURE_OPENAI_DEPLOYMENT="gpt-5-mini"
 You can find these values in the Azure Portal under each resource's "Keys and Endpoint" section. If you don't have these services yet, ask Copilot CLI:
 
 ```
-> I need an Azure AI Search service (Basic tier) and an Azure OpenAI deployment with gpt-5-mini for the AIMarket Phase 3 features. Help me create them.
+> I need an Azure AI Search service (Basic tier) and a Microsoft Foundry deployment with gpt-5-mini for the AIMarket Phase 3 features. Help me create them.
 ```
 
 #### Step 2: Add semantic product search (interactive CLI)
@@ -440,7 +440,7 @@ If you're still in a Copilot CLI session, use `/delegate`:
 ```
 > /delegate Create the AI shopping assistant for AIMarket. Read PLAN.md 
   in the repo root for the full spec — see "AI Feature 2: Shopping Assistant" 
-  under Phase 3. Implement the POST /api/chat endpoint using the Azure OpenAI 
+  under Phase 3. Implement the POST /api/chat endpoint using the Microsoft Foundry
   SDK for my language. The endpoint should fetch all products and include them 
   in the system prompt. Also add a ChatWidget component to the React frontend. 
   Use the acceptance criteria in PLAN.md Phase 3 to verify your work.
@@ -459,7 +459,7 @@ Add the AI shopping assistant to AIMarket.
 ## Spec
 Read PLAN.md in the repo root. Implement:
 1. **POST /api/chat** endpoint (see 'AI Feature 2: Shopping Assistant' in Phase 3)
-   - Uses the Azure OpenAI SDK for this project's language
+   - Uses the Microsoft Foundry SDK for this project's language
    - Fetches all products and injects them into the system prompt
    - Accepts a messages array for conversation history
    - Returns the assistant's response
@@ -550,7 +550,13 @@ docker --version  # Need Docker Desktop or Docker Engine
 azd up
 ```
 
-Deployment takes ~3 minutes. If it fails, ask Copilot CLI to help diagnose:
+> ⏳ **While you wait:** Azure is building your Docker images and provisioning Container Apps. While it runs:
+>
+> 1. Watch your resources appear in real-time. Open the [Azure Portal](https://portal.azure.com) → search for your resource group, or run `az resource list --resource-group rg-<env-name> --output table` in a separate terminal.
+> 2. Open `client/Dockerfile` and trace the build: where does `VITE_API_URL` get baked in? (Spoiler: this is about to cause a problem you'll fix in Step 3.)
+> 3. Think about why the API and frontend are *separate* Container Apps instead of one. What are the scaling implications?
+
+Deployment may take several minutes. If it fails, ask Copilot CLI to help diagnose:
 
 ```
 > azd up failed with this error: [paste the error]. What's wrong?
@@ -558,7 +564,23 @@ Deployment takes ~3 minutes. If it fails, ask Copilot CLI to help diagnose:
 
 #### Step 3: Fix the frontend API URL
 
-`azd deploy` builds the frontend Docker image but doesn't pass `VITE_API_URL` as a build arg. The React app defaults to `/api` (the Vite proxy path), which doesn't work in production since the frontend and API are separate Container Apps. You need to rebuild the frontend image with the actual API URL.
+`azd deploy` builds the frontend Docker image but doesn't pass `VITE_API_URL` as a build arg. The React app defaults to `/api` (the Vite proxy path), which doesn't work in production since the frontend and API are separate Container Apps. You need to rebuild the frontend image with the actual API URL baked in and update the container app.
+
+Ask Copilot CLI to handle this for you:
+
+```
+> The frontend can't reach the API because VITE_API_URL wasn't set at build time. 
+  Rebuild the client Docker image with VITE_API_URL set to the deployed API_URL 
+  (from azd env get-value) plus "/api". Push it to ACR, then update the 
+  aimarket-web container app to use the new image. Use az and docker commands.
+```
+
+> **On Apple Silicon (M1/M2/M3)?** If the agent doesn't add it, remind it: *"Add `--platform linux/amd64` to the docker build — Azure runs Linux AMD64 containers."*
+
+If the agent doesn't get this right, expand the manual steps below and run them yourself.
+
+<details>
+<summary>Manual fallback: rebuild and push the frontend image</summary>
 
 ```bash
 # Get the deployed API URL from azd environment
@@ -577,14 +599,14 @@ docker build --build-arg VITE_API_URL="$API_URL/api" -t "$ACR/aimarket-web:v1" .
 docker push "$ACR/aimarket-web:v1"
 ```
 
-> **On Apple Silicon (M1/M2/M3)?** Azure runs Linux AMD64 containers. Add `--platform linux/amd64` to the `docker build` command to cross-compile.
-
-Then ask Copilot CLI to update the container app with the new image:
+Then update the container app:
 
 ```
 > Update the aimarket-web container app to use the image I just pushed 
   to ACR. The image tag is aimarket-web:v1. Use az containerapp update.
 ```
+
+</details>
 
 Wait ~30 seconds for the new revision to start, then verify the frontend loads products.
 
@@ -636,7 +658,7 @@ Here's where agentic AI shows up in this journey:
 | **Code review** | You review generated code for business logic correctness | AI gets structure right but misses edge cases; you catch them |
 | **Delegation** | Cloud agent implements a feature from a GitHub issue | Write well-scoped issues with acceptance criteria, review the PR |
 | **Product search** | Azure AI Search with semantic ranking | AI-powered features are API calls, not ML projects |
-| **Shopping assistant** | Azure OpenAI grounded in product catalog | Ground LLMs in real data to prevent hallucination |
+| **Shopping assistant** | Microsoft Foundry grounded in product catalog | Ground LLMs in real data to prevent hallucination |
 | **Infrastructure** | Copilot CLI generates Bicep templates and Dockerfiles | Review deployment config carefully; silent failures are common |
 | **Debugging** | Ask Copilot CLI to diagnose deployment failures | Describe errors, let AI suggest fixes, verify yourself |
 
@@ -787,8 +809,8 @@ az group delete --name aimarket-rg --yes --no-wait
 
 ## Assignment
 
-1. Add a new AI feature: ask Copilot CLI to *"Add a product recommendations endpoint that suggests similar products based on category and price range using Azure OpenAI"*
-2. Add order confirmation: ask Copilot CLI to *"When an order is placed, use Azure OpenAI to generate a personalized thank-you message that mentions the products purchased"*
+1. Add a new AI feature: ask Copilot CLI to *"Add a product recommendations endpoint that suggests similar products based on category and price range using Microsoft Foundry"*
+2. Add order confirmation: ask Copilot CLI to *"When an order is placed, use Microsoft Foundry to generate a personalized thank-you message that mentions the products purchased"*
 3. Clean up with `azd down --force --purge`
 
 ---
@@ -805,7 +827,7 @@ In Agentic Journey 05, you'll build SmartTodo, an iPhone app where AI breaks vag
 
 - [AIMarket Spec](./PLAN.md): The plan document used by Copilot CLI to scaffold the app
 - [Azure AI Search Documentation](https://learn.microsoft.com/azure/search/)
-- [Azure OpenAI Service](https://learn.microsoft.com/azure/ai-services/openai/)
+- [Microsoft Foundry](https://learn.microsoft.com/azure/ai-services/)
 - [Azure Cosmos DB](https://learn.microsoft.com/azure/cosmos-db/)
 - [Azure Container Apps](https://learn.microsoft.com/azure/container-apps/)
 - [Azure Developer CLI](https://learn.microsoft.com/azure/developer/azure-developer-cli/)

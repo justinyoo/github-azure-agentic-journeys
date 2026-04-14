@@ -121,7 +121,9 @@ The agent loads the `grafana-azure` skill, which provides Grafana-specific confi
 
 2. Generates a lean Bicep (Azure's infrastructure-as-code language) structure in `infra-grafana/` with no PostgreSQL module needed (SQLite is the default)
 3. Updates `azure.yaml`, registers Azure providers, sets environment variables
-4. Runs `azd up` (~2 minutes)
+4. Runs `azd up`
+
+> ⏳ **While you wait:** This is the fastest deployment in the project — no database to provision. While it runs, consider: *why* is it so fast? Compare the [architecture diagram](#architecture) to the [n8n architecture](../n8n/README.md#architecture). What's missing? (Answer: no database server. SQLite is embedded in the container, which means zero database provisioning time, but that comes with a tradeoff you'll discover in the [Assignment](#assignment).) You can also check what's being created by running `az resource list --resource-group rg-<env-name> --output table` in a separate terminal.
 
 You can ask follow-up questions anytime:
 

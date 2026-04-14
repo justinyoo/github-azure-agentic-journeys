@@ -621,7 +621,7 @@ Single service only — no `web` service. The iOS app runs on device, not in Azu
 - **Azure SQL: Function App identity must be an AD admin** — without this, the Function App gets "Login failed for user '<token-identified principal>'" when using Entra auth. Add the Function App's `principalId` to the SQL Server `administrators` block, or run `az sql server ad-admin create` post-provisioning.
 - Azure SQL Database: set `maxSizeBytes: 2147483648` (2 GB) when using Basic tier (default 32 GB exceeds the limit)
 - **Azure SQL Database: set `zoneRedundant: false`** — Basic tier does not support zone redundancy. AVM module may default to true, causing "ProvisioningDisabled: Provisioning of zone redundant database/pool is not supported."
-- AI Services: `disableLocalAuth: false` for development, system-assigned managed identity
+- Microsoft Foundry: use `br/public:avm/ptn/ai-ml/ai-foundry` with `baseName` (max 12 chars), `aiModelDeployments` array for gpt-5-mini, `aiFoundryConfiguration.disableLocalAuth: false`, and system-assigned managed identity
 - **AI model version is region-specific** — use `az cognitiveservices model list --location <region> --query "[?model.name=='gpt-5-mini']"` to find the correct version before generating Bicep. For example, `westus` requires `2025-08-07` (not `2025-02-27`).
 - Outputs in SCREAMING_SNAKE_CASE: `API_URL`, `SQL_SERVER_NAME`, `SQL_DATABASE_NAME`, `FUNCTION_APP_NAME`, `AZURE_AI_ENDPOINT`, `AZURE_AI_DEPLOYMENT`, `RESOURCE_GROUP_NAME`
 - `azd-service-name: 'api'` tag on the Function App
