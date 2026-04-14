@@ -577,6 +577,9 @@ Test it, deploy with `azd up`, and compare the new steps with the old ones.
 
 ---
 
+<details>
+<summary>How Agentic AI is Used</summary>
+
 ## How Agentic AI is Used
 
 <p align="center">
@@ -593,6 +596,8 @@ Here's where agentic AI shows up in this journey:
 | **Infrastructure** | Copilot CLI generates Bicep with AVM modules and managed identity | Review deployment config carefully. Missing role assignments break silently |
 | **Debugging** | Ask Copilot CLI to diagnose deployment or runtime errors | Describe errors, let AI suggest fixes, verify yourself |
 | **Delegation** | GitHub Copilot cloud agent creates the deployment PR from an issue | Write well-scoped issues with acceptance criteria, review the PR |
+
+</details>
 
 ---
 
@@ -611,6 +616,9 @@ Here's where agentic AI shows up in this journey:
 Functions and Microsoft Foundry scale to zero when idle, so you pay almost nothing during development. Azure SQL Basic is the floor at ~$5/month. Clean up with `azd down` when done.
 
 ---
+
+<details>
+<summary>Troubleshooting</summary>
 
 ## Troubleshooting
 
@@ -690,7 +698,12 @@ Make sure the URL uses `https://` and includes no trailing slash.
 
 **Fix:** This is expected behavior. Show a loading indicator in the iOS app. For production, consider the Functions Premium plan or Azure Container Apps for always-on hosting.
 
+</details>
+
 ---
+
+<details>
+<summary>Verification Checklist</summary>
 
 ## Verification Checklist
 
@@ -718,6 +731,8 @@ curl -s -X PATCH "$API_URL/api/todos/$TODO_ID/steps/$STEP_ID" \
 # 5. Cleanup test data
 curl -s -X DELETE "$API_URL/api/todos/$TODO_ID" -o /dev/null -w "HTTP %{http_code}\n"
 ```
+
+</details>
 
 ---
 

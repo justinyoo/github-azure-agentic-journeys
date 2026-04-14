@@ -644,6 +644,9 @@ Test it, deploy it with `azd up`, and verify it works in production.
 
 ---
 
+<details>
+<summary>How Agentic AI is Used</summary>
+
 ## How Agentic AI is Used
 
 <p align="center">
@@ -662,6 +665,8 @@ Here's where agentic AI shows up in this journey:
 | **Infrastructure** | Copilot CLI generates Bicep templates and Dockerfiles | Review deployment config carefully; silent failures are common |
 | **Debugging** | Ask Copilot CLI to diagnose deployment failures | Describe errors, let AI suggest fixes, verify yourself |
 
+</details>
+
 ---
 
 ## Cost Breakdown
@@ -678,6 +683,9 @@ Here's where agentic AI shows up in this journey:
 Scale-to-zero on Container Apps keeps costs low during development. Azure AI Search Basic tier is the main ongoing cost. Clean up with `azd down` when done.
 
 ---
+
+<details>
+<summary>Troubleshooting</summary>
 
 ## Troubleshooting
 
@@ -756,7 +764,12 @@ Add `--platform linux/amd64` to your `docker build` commands. Azure Container Ap
 **Frontend can't find the API (`VITE_API_URL` not set):**
 The `ARG VITE_API_URL` line must come BEFORE the `npm run build` step in `client/Dockerfile`. If it's after, the build arg is silently ignored.
 
+</details>
+
 ---
+
+<details>
+<summary>Verification Checklist</summary>
 
 ## Verification Checklist
 
@@ -780,6 +793,8 @@ curl -s -X POST "$API_URL/api/chat" \
 # 4. Frontend loads (expect HTML)
 curl -s -o /dev/null -w "%{http_code}" "$WEB_URL"  # Expect 200
 ```
+
+</details>
 
 ---
 

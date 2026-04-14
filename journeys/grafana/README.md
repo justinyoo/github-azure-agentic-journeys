@@ -161,6 +161,9 @@ The agent will check if it's a cold start issue (scale-from-zero takes 30-60s) o
 
 ---
 
+<details>
+<summary>Configuration Reference (handled by the agent automatically)</summary>
+
 ## Configuration Reference
 
 ### Environment Variables
@@ -234,7 +237,12 @@ GF_DATABASE_SSL_MODE: require
 | **Total (SQLite)** | | **~$10-20/month** |
 | + PostgreSQL (optional) | B_Standard_B1ms | +~$15/month |
 
+</details>
+
 ---
+
+<details>
+<summary>Troubleshooting</summary>
 
 ## Troubleshooting
 
@@ -297,6 +305,8 @@ resources: {
   memory: '2Gi'  // Increase from 1Gi
 }
 ```
+
+</details>
 
 ---
 

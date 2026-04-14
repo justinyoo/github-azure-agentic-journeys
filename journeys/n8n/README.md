@@ -171,6 +171,9 @@ For a more detailed checklist, see the troubleshooting section.
 
 ---
 
+<details>
+<summary>Configuration Reference (handled by the agent automatically)</summary>
+
 ## Configuration Reference
 
 ### Environment Variables
@@ -234,7 +237,12 @@ Sensitive values are stored as Container App secrets and referenced via `secretR
 
 Scale-to-zero keeps costs low during idle periods. For production with `minReplicas: 1`, expect ~$60-80/month for Container Apps alone.
 
+</details>
+
 ---
+
+<details>
+<summary>Troubleshooting</summary>
 
 ## Troubleshooting
 
@@ -298,6 +306,8 @@ var encryptionKey = newGuid()
 @secure()
 param n8nEncryptionKey string = newGuid()
 ```
+
+</details>
 
 ---
 

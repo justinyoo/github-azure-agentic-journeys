@@ -332,6 +332,9 @@ Health endpoint: `GET /health` → `{"status": "OK"}` (HTTP 200)
 
 ---
 
+<details>
+<summary>Troubleshooting</summary>
+
 ## Troubleshooting
 
 ### Deployment Failed (`azd up` errors)
@@ -405,6 +408,8 @@ Ask the agent:
 **Symptom:** `SUPERSET_SECRET_KEY must be a non-empty string`
 
 **Fix:** Ensure `SUPERSET_SECRET_KEY` is set in Kubernetes secrets (32+ characters).
+
+</details>
 
 ---
 
