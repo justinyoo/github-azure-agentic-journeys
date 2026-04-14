@@ -70,7 +70,7 @@ graph TB
 - **NGINX Ingress Controller**: HTTP routing within the cluster
 - **Azure Log Analytics**: Monitoring and diagnostics
 
-**Infrastructure directory:** [`infra-superset/`](../../infra-superset/) (generated at repo root during deployment)
+**Infrastructure directory:** `infra-superset/` (generated at the repo root when you run the deployment. It won't exist until then)
 
 ### Why AKS Instead of Container Apps?
 
@@ -88,7 +88,7 @@ These patterns are natural in Kubernetes but complex or unavailable in Container
 
 ## Deploy with the Agent
 
-You'll use `@oss-to-azure-deployer` in GitHub Copilot CLI to generate and deploy the entire infrastructure through conversation.
+You'll use `oss-to-azure-deployer` (a custom agent defined in this repo) in GitHub Copilot CLI to generate and deploy the entire infrastructure through conversation.
 
 > **💡 Tip: Track issues as you go.** When giving Copilot CLI a prompt, add *"If you encounter any issues, log them to issues.md so they can be tracked and fixed."* This gives Copilot CLI a place to record problems it finds or fixes during generation, making it easier to iterate and debug.
 
@@ -100,21 +100,21 @@ Make sure you're in the repo root first:
 cd github-azure-agentic-journeys
 ```
 
-Then start Copilot CLI:
+Then start GitHub Copilot CLI, a terminal-based AI assistant that can read, write, and run code in your project:
 
 ```bash
 copilot
 ```
 
-Once inside the interactive session, add the marketplace (first time only):
+> **Don't have `copilot`?** Install it first. See [prerequisites](../../README.md#prerequisites) for the installation link.
 
-> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself.
+Plugins extend what Copilot CLI can do. The Azure Skills plugin adds deployment tools, Bicep schema lookups, and infrastructure generation. Add the marketplace and install the plugin (first time only):
+
+> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself. It represents the Copilot CLI prompt.
 
 ```
 > /plugin marketplace add microsoft/azure-skills
 ```
-
-Then install the plugin:
 
 ```
 > /plugin install azure@azure-skills
@@ -123,7 +123,7 @@ Then install the plugin:
 > **Already installed?** The plugin persists across sessions. If you've done a previous journey, skip the install commands.
 > For more details, see the [azure-skills repository](https://github.com/microsoft/azure-skills).
 
-Now select the deployment agent:
+Now select the deployment agent. Agents are specialized personas that know how to handle specific tasks:
 
 ```
 > /agent
@@ -174,7 +174,7 @@ Ask the agent to confirm everything is working:
 > Verify the Superset deployment is working. Check that it's using PostgreSQL not SQLite.
 ```
 
-You can also verify manually (open a new terminal or exit Copilot CLI with `Ctrl+C` first):
+You can also verify manually. Open a new terminal and run the following commands to check the health endpoint:
 
 ```bash
 # Check pod status
@@ -211,7 +211,13 @@ SUPERSET_URL=$(azd env get-value SUPERSET_URL)
 echo "Open in browser: $SUPERSET_URL"
 ```
 
-Log in with the username `admin` and the password you set during deployment (the `SUPERSET_ADMIN_PASSWORD` value). You should see the Superset home page with options to create charts and dashboards.
+Log in with the username `admin` and the password set during deployment. To retrieve it, run:
+
+```bash
+azd env get-value SUPERSET_ADMIN_PASSWORD
+```
+
+You should see the Superset home page with options to create charts and dashboards.
 
 ---
 

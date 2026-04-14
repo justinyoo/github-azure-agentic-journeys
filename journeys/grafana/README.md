@@ -52,13 +52,13 @@ graph TB
 
 > ⚠️ **Storage note:** Grafana uses SQLite by default, which lives inside the container. Dashboards and data sources are lost when the container restarts. See [Storage Considerations](#storage-sqlite-vs-postgresql) for production options.
 
-**Infrastructure directory:** [`infra-grafana/`](../../infra-grafana/) (generated at repo root during deployment)
+**Infrastructure directory:** `infra-grafana/` (generated at the repo root when you run the deployment. It won't exist until then)
 
 ---
 
 ## Deploy with the Agent
 
-You'll use `@oss-to-azure-deployer` in GitHub Copilot CLI to generate and deploy the entire infrastructure through conversation.
+You'll use `oss-to-azure-deployer` (a custom agent defined in this repo) in GitHub Copilot CLI to generate and deploy the entire infrastructure through conversation.
 
 > **💡 Tip: Track issues as you go.** When giving Copilot CLI a prompt, add *"If you encounter any issues, log them to issues.md so they can be tracked and fixed."* This gives Copilot CLI a place to record problems it finds or fixes during generation, making it easier to iterate and debug.
 
@@ -70,21 +70,21 @@ Make sure you're in the repo root first:
 cd github-azure-agentic-journeys
 ```
 
-Then start Copilot CLI:
+Then start GitHub Copilot CLI, a terminal-based AI assistant that can read, write, and run code in your project:
 
 ```bash
 copilot
 ```
 
-Once inside the interactive session, add the marketplace (first time only):
+> **Don't have `copilot`?** Install it first. See [prerequisites](../../README.md#prerequisites) for the installation link.
 
-> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself.
+Plugins extend what Copilot CLI can do. The Azure Skills plugin adds deployment tools, Bicep schema lookups, and infrastructure generation. Add the marketplace and install the plugin (first time only):
+
+> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself. It represents the Copilot CLI prompt.
 
 ```
 > /plugin marketplace add microsoft/azure-skills
 ```
-
-Then install the plugin:
 
 ```
 > /plugin install azure@azure-skills
@@ -93,7 +93,7 @@ Then install the plugin:
 > **Already installed?** The plugin persists across sessions. If you've done a previous journey, skip the install commands.
 > For more details, see the [azure-skills repository](https://github.com/microsoft/azure-skills).
 
-Now select the deployment agent:
+Now select the deployment agent. Agents are specialized personas that know how to handle specific tasks:
 
 ```
 > /agent
@@ -141,15 +141,16 @@ Ask the agent to confirm everything is working:
 > Verify the Grafana deployment is working. Check the health endpoint.
 ```
 
-You can also verify manually (open a new terminal or exit Copilot CLI with `Ctrl+C` first):
+You can also verify manually. Open a new terminal and run the following commands to check the health endpoint:
 
 ```bash
+# Store your deployed URL in a variable (azd env stores outputs from the deployment)
 GRAFANA_URL=$(azd env get-value GRAFANA_URL)
 curl -s "$GRAFANA_URL/api/health"
 # Expected: {"commit":"...","database":"ok","version":"10.x.x"}
 ```
 
-Open `$GRAFANA_URL` in your browser. Log in with the admin username and the password you set during deployment. You should see the Grafana home page with a welcome panel.
+Open `$GRAFANA_URL` in your browser. Log in with the admin username and the password set during deployment. If you're not sure what password was generated, ask the agent: *"What's the Grafana admin password?"* It can retrieve it from the deployment environment.
 
 If something goes wrong, just ask. You're still in the same session:
 

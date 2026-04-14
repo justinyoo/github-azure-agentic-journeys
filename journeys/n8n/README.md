@@ -6,7 +6,7 @@
   <img src="./images/n8n-workflow-automation.webp" alt="n8n: Workflow Automation on Azure" width="800" />
 </p>
 
-Want workflow automation on Azure but don't want to write Bicep (Azure's infrastructure-as-code language)? Tell an AI agent what you want, and it generates the infrastructure, configures health probes, and deploys it. You'll have [n8n](https://n8n.io)running on Container Apps with PostgreSQL in about 20 minutes.
+Want workflow automation on Azure but don't want to write Bicep (Azure's infrastructure-as-code language)? Tell an AI agent what you want, and it generates the infrastructure, configures health probes, and deploys it. You'll have [n8n](https://n8n.io), an open-source workflow automation tool (like Zapier, but self-hosted), running on Container Apps with PostgreSQL in about 20 minutes.
 
 ## Learning Objectives
 
@@ -53,13 +53,13 @@ graph TB
 - **Azure Log Analytics**: Centralized monitoring and logging
 - **User-Assigned Managed Identity**: Secure access to Azure resources
 
-**Infrastructure directory:** [`infra-n8n/`](../../infra-n8n/) (generated at repo root during deployment)
+**Infrastructure directory:** `infra-n8n/` (generated at the repo root when you run the deployment. It won't exist until then)
 
 ---
 
 ## Deploy with the Agent
 
-You'll use `@oss-to-azure-deployer` in GitHub Copilot CLI to generate and deploy the entire infrastructure through conversation.
+You'll use `oss-to-azure-deployer` (a custom agent defined in this repo) in GitHub Copilot CLI to generate and deploy the entire infrastructure through conversation.
 
 > **💡 Tip: Track issues as you go.** When giving Copilot CLI a prompt, add *"If you encounter any issues, log them to issues.md so they can be tracked and fixed."* This gives Copilot CLI a place to record problems it finds or fixes during generation, making it easier to iterate and debug.
 
@@ -71,21 +71,21 @@ Make sure you're in the repo root first:
 cd github-azure-agentic-journeys
 ```
 
-Then start Copilot CLI:
+Then start GitHub Copilot CLI, a terminal-based AI assistant that can read, write, and run code in your project:
 
 ```bash
 copilot
 ```
 
-Once inside the interactive session, add the marketplace (first time only):
+> **Don't have `copilot`?** Install it first. See [prerequisites](../../README.md#prerequisites) for the installation link.
 
-> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself.
+Plugins extend what Copilot CLI can do. The Azure Skills plugin adds deployment tools, Bicep schema lookups, and infrastructure generation. Add the marketplace and install the plugin (first time only):
+
+> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself. It represents the Copilot CLI prompt.
 
 ```
 > /plugin marketplace add microsoft/azure-skills
 ```
-
-Then install the plugin:
 
 ```
 > /plugin install azure@azure-skills
@@ -94,7 +94,7 @@ Then install the plugin:
 > **Already installed?** The plugin persists across sessions. If you've done a previous journey, skip the install commands.
 > For more details, see the [azure-skills repository](https://github.com/microsoft/azure-skills).
 
-Now select the deployment agent:
+Now select the deployment agent. Agents are specialized personas that know how to handle specific tasks:
 
 ```
 > /agent
@@ -148,15 +148,19 @@ Ask the agent to confirm everything is working:
 > Verify the n8n deployment is working. Check the health endpoint and container logs.
 ```
 
-The agent uses `azure_deploy_app_logs` to fetch logs and confirm the deployment is healthy.
+The agent uses `azure_deploy_app_logs` (an Azure MCP tool that fetches container logs) to confirm the deployment is healthy.
 
-You can also verify manually (open a new terminal or exit Copilot CLI with `Ctrl+C` first):
+You can also verify manually. Open a new terminal and run the following commands to check the health endpoint:
 
 ```bash
+# Store your deployed URL in a variable (azd env stores outputs from the deployment)
 N8N_URL=$(azd env get-value N8N_URL)
-curl -s -o /dev/null -w "%{http_code}" "$N8N_URL"  # Expect 200
+
+# Check the HTTP status code (200 means the app is responding)
+curl -s -o /dev/null -w "%{http_code}" "$N8N_URL"
 # Expected: 200
 
+# Verify the page title confirms it's n8n
 curl -s "$N8N_URL" | grep -o "<title>[^<]*</title>"
 # Expected: <title>n8n.io - Workflow Automation</title>
 ```

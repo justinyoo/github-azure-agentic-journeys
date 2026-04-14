@@ -122,28 +122,27 @@ You'll build the API in stages, not all at once. Each step teaches a different a
 
 #### Step 1: Set up the project
 
-Create a new directory and copy the spec into it:
+Create a project directory inside the repo so Copilot CLI can access the skills and agent definitions in `.github/`:
 
 ```bash
-mkdir ~/aimarket && cd ~/aimarket
-cp /path/to/github-azure-agentic-journeys/journeys/aimarket/PLAN.md .
+cd github-azure-agentic-journeys/journeys/aimarket
 ```
 
-Start Copilot CLI:
+Start GitHub Copilot CLI, a terminal-based AI assistant that can read, write, and run code in your project:
 
 ```bash
 copilot
 ```
 
-Once inside the interactive session, add the marketplace (first time only):
+> **Don't have `copilot`?** Install it first. See [prerequisites](../../README.md#prerequisites) for the installation link.
 
-> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself.
+Plugins extend what Copilot CLI can do. The Azure Skills plugin adds deployment tools, Bicep schema lookups, and infrastructure generation. Add the marketplace and install the plugin (first time only):
+
+> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself. It represents the Copilot CLI prompt.
 
 ```
 > /plugin marketplace add microsoft/azure-skills
 ```
-
-Then install the plugin:
 
 ```
 > /plugin install azure@azure-skills
@@ -255,18 +254,23 @@ Start the API dev server for your language, then in a new terminal:
 ```bash
 # Does the server start and respond?
 curl http://localhost:3000/api/health
+# Expected: {"status":"ok"} or similar JSON health response
 
 # Do all 10 seed products load with pagination?
 curl http://localhost:3000/api/products | python3 -m json.tool | head -20
+# Expected: JSON array with product objects (name, price, category, inventory)
 
 # Does category filtering work?
 curl "http://localhost:3000/api/products?category=Electronics"
+# Expected: Only products with category "Electronics" (3 items, not all 10)
 
 # Does a single product include the full description?
 curl http://localhost:3000/api/products/prod-1 | python3 -m json.tool
+# Expected: Single product object with all fields including description
 
 # Does a missing product return the correct error format?
 curl http://localhost:3000/api/products/nonexistent
+# Expected: 404 response with error message
 
 # Does order creation decrement inventory?
 INVENTORY_BEFORE=$(curl -s http://localhost:3000/api/products/prod-3 | python3 -c "import sys,json; print(json.load(sys.stdin)['inventory'])")
@@ -538,9 +542,9 @@ docker --version  # Need Docker Desktop or Docker Engine
 2. Is there an Azure Container Registry resource? Without it, there's nowhere to push images.
 3. Open `api/Dockerfile`. Does it use the correct base image for your language? If using Node.js with `better-sqlite3`, it needs native build tools (`python3 make g++`).
 4. Open `client/nginx.conf`. Does it ONLY have `try_files` for SPA routing? No `/api/` proxy block. (With public ingress on Container Apps, each service has its own URL, so nginx proxying to `aimarket-api` will crash because that hostname doesn't resolve.)
-5. Open `client/.dockerignore`. Does it exclude dependency directories? Without this, the Docker build context is huge and may fail.
+5. Open `client/.dockerignore`. Does it exclude dependency directories (`node_modules/`, `.git/`)? Without this, the Docker build context is huge and may fail.
 6. Open `api/.dockerignore`. Make sure it does NOT exclude build config files like `tsconfig.json`. The Docker build needs them to compile.
-7. Open `client/Dockerfile`. Does it have `ARG VITE_API_URL` and `ENV VITE_API_URL=$VITE_API_URL` BEFORE the `npm run build` step? Without these, the `--build-arg` in Step 3 is silently ignored and the frontend can't find the API.
+7. Open `client/Dockerfile`. Does it have `ARG VITE_API_URL` and `ENV VITE_API_URL=$VITE_API_URL` **before** the `npm run build` step? Docker `ARG` lines must come before the step that uses them, otherwise the value is empty at build time and the frontend can't find the API.
 
 **💡 What you're learning:** Deployment infrastructure has sharp edges that break silently. Missing service tags = deployment succeeds but app doesn't update. Missing `.dockerignore` = disk space errors. Wrong nginx config = container crashes on startup. These are the real-world issues that agentic AI can help generate, but you still need to review.
 

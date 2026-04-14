@@ -133,28 +133,27 @@ You'll build the API in stages, not all at once. Each step teaches a different a
 
 #### Step 1: Set up the project
 
-Create a new directory and copy the spec into it:
+Create a project directory inside the repo so Copilot CLI can access the skills and agent definitions in `.github/`:
 
 ```bash
-mkdir ~/smart-todo && cd ~/smart-todo
-cp /path/to/github-azure-agentic-journeys/journeys/smart-todo/PLAN.md .
+cd github-azure-agentic-journeys/journeys/smart-todo
 ```
 
-Start Copilot CLI:
+Start GitHub Copilot CLI, a terminal-based AI assistant that can read, write, and run code in your project:
 
 ```bash
 copilot
 ```
 
-Once inside the interactive session, add the marketplace (first time only):
+> **Don't have `copilot`?** Install it first. See [prerequisites](../../README.md#prerequisites) for the installation link.
 
-> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself.
+Plugins extend what Copilot CLI can do. The Azure Skills plugin adds deployment tools, Bicep schema lookups, and infrastructure generation. Add the marketplace and install the plugin (first time only):
+
+> **Note:** Lines starting with `>` in the code blocks below show what to type in the Copilot CLI session. Don't include the `>` character itself. It represents the Copilot CLI prompt.
 
 ```
 > /plugin marketplace add microsoft/azure-skills
 ```
-
-Then install the plugin:
 
 ```
 > /plugin install azure@azure-skills
@@ -455,7 +454,7 @@ If the app can't reach the API, check that:
 
 ##### Step 2: Deploy
 
-Pre-deployment (once per subscription):
+Azure requires each resource type to be registered in your subscription before first use. Run these once per subscription:
 
 ```bash
 az provider register --namespace Microsoft.Web
