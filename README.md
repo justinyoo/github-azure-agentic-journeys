@@ -74,6 +74,7 @@ The journeys in this repo use GitHub Copilot CLI by default. However, you can us
 | 03 | [Grafana - Metrics and Visualization](./journeys/grafana/README.md) | Container Apps deployed to Azure |
 | 04 | [Apache Superset - BI Platform](./journeys/superset/README.md) | Azure Kubernetes Service (AKS) + PostgreSQL deployed to Azure |
 | 05 | [SmartTodo - AI Task Breakdown](./journeys/smart-todo/README.md) | Swift iOS + Azure Flex Functions + Azure SQL + AI Foundry |
+| 06 | [PostMaster - Social Media Content Generator](./journeys/post-master/README.md) | Multi-agent system + MAF + Foundry Agent Service + Aspire + Blazor |
 
 ## How the agentic journeys work
 

@@ -225,6 +225,9 @@ journeys/
 ├── smart-todo/                   # Full-stack journey (iOS + Functions + AI)
 │   ├── README.md
 │   └── PLAN.md
+├── post-master/                  # Full-stack journey (Multi-agent + Aspire + Blazor)
+│   ├── README.md
+│   └── PLAN.md
 └── aimarket/                    # Full-stack journey (API + frontend + AI)
     ├── README.md
     ├── PLAN.md
