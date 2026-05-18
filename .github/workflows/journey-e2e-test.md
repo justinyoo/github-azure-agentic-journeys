@@ -30,6 +30,12 @@ description: "End-to-end test harness that deploys every journey to Azure, verif
 labels: ["testing", "azure", "journeys"]
 timeout-minutes: 120
 
+env:
+  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+
 engine:
   id: copilot
 
