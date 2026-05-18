@@ -77,15 +77,12 @@ network:
 safe-outputs:
   threat-detection: false
   create-issue:
-    title-prefix: "[Journey E2E] ${{ github.event.inputs.journey || 'all' }} "
+    title-prefix: "[Journey E2E] "
     labels: [test-report, automated]
     close-older-issues: false
     max: 1
   add-comment:
     max: 1
-  actions:
-    upload-screenshots:
-      uses: actions/upload-artifact@v4
 ---
 
 # Journey End-to-End Test Harness
@@ -171,8 +168,12 @@ These are set from repository secrets and variables:
 Create a top-level folder that persists across the selected journey run for screenshots and the final report:
 
 ```bash
-SUITE_DIR=~/journey-runs/test-suite-$(date +%Y%m%d-%H%M%S)
+RUN_EPOCH=$(date +%s)
+RUN_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+TIMESTAMP=$(date +%Y%m%d-%H%M%S)
+SUITE_DIR=~/journey-runs/test-suite-$TIMESTAMP
 mkdir -p "$SUITE_DIR/screenshots"
+printf 'RUN_EPOCH=%s\nRUN_STARTED_AT=%s\nSUITE_DIR=%s\n' "$RUN_EPOCH" "$RUN_STARTED_AT" "$SUITE_DIR" > "$SUITE_DIR/run-metadata.env"
 ```
 
 ### Step 2: Resolve Selected Journey
@@ -237,7 +238,7 @@ Run the journey end-to-end using the journey-runner approach:
 5. **Screenshot**: If the journey has a web frontend URL, use Playwright to capture a screenshot:
    - Navigate to the URL, wait for `networkidle`, wait 3 extra seconds, take a full-page screenshot
    - Save as `screenshot-<journey>.png` in `$JOURNEY_DIR`
-6. **Copy screenshot to suite folder**: `cp $JOURNEY_DIR/screenshot-*.png $SUITE_DIR/screenshots/`
+6. **Copy screenshot to suite folder**: `cp $JOURNEY_DIR/screenshot-*.png $SUITE_DIR/screenshots/ 2>/dev/null || true`
 7. **Tear down**: Always run `azd down --force --purge --no-prompt` from `$JOURNEY_DIR` regardless of success or failure
 8. **Delete working directory**: `rm -rf $JOURNEY_DIR`
 9. **Log results**: Record pass/fail for build, deploy, verify, cleanup phases
@@ -258,6 +259,18 @@ After the selected journey run completes, create a markdown report with:
 - Screenshot file list (reference `screenshots/` folder)
 - Detailed failure/warning messages for any non-PASS results
 
+Use the metadata captured at setup time for timing. Keep the arithmetic simple so it does not trip command safety filters:
+
+```bash
+source "$SUITE_DIR/run-metadata.env"
+RUN_ENDED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+RUN_ENDED_EPOCH=$(date +%s)
+TOTAL_SECONDS=$((RUN_ENDED_EPOCH - RUN_EPOCH))
+TOTAL_MINUTES=$((TOTAL_SECONDS / 60))
+```
+
+Do not use nested command substitution, indirect expansion, parameter transformation, or large here-doc shell commands when generating the report. If report generation is complex, write the markdown file directly using a file write operation rather than a clever shell script. Clever shell is where CI gremlins rent office space.
+
 Save the report to `$SUITE_DIR/test-report.md`.
 
 Suite folder structure after completion:
@@ -272,24 +285,22 @@ Suite folder structure after completion:
     └── screenshot-aimarket.png
 ```
 
-### Step 5: Upload Screenshots as Workflow Artifacts
+### Step 5: Record Screenshot Paths
 
-After the selected journey run completes, upload the screenshots as a workflow artifact by calling the `upload-screenshots` tool with:
+Do not call `upload-screenshots` or `upload_screenshots`; that tool is not available in this workflow. Instead:
 
-- `name`: `journey-screenshots-${{ github.event.inputs.journey || 'all' }}`
-- `path`: The `$SUITE_DIR/screenshots/` directory
-- `retention-days`: `90`
-
-This attaches the screenshots to the workflow run itself. They auto-expire after 90 days and can be downloaded from the Actions run summary.
+- Copy screenshots into `$SUITE_DIR/screenshots/`
+- Include the screenshot filenames and local suite paths in `$SUITE_DIR/test-report.md`
+- If no screenshot was captured, say so in the report and explain why
 
 ### Step 6: Create GitHub Issue
 
 Use the `create-issue` safe output to create a GitHub issue with:
-- Title: `Journey E2E Test Report — ${{ github.event.inputs.journey || 'all' }} — <date>`
+- Title: `${{ github.event.inputs.journey || 'all' }} — <date>`
 - Body: The focused report markdown from `$SUITE_DIR/test-report.md`
 - Labels: `test-report`, `automated`
 
-Note: Screenshots are available as workflow artifacts (linked from the Actions run), not inline in the issue.
+Note: Screenshots are referenced by filename/path in the issue. They are not uploaded as workflow artifacts unless a real artifact-upload step/tool exists in the generated workflow.
 
 ## Journey Reference
 

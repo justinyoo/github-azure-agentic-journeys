@@ -140,10 +140,11 @@ journeys/<app>/
 
 ### Bicep Patterns
 
-- **Always use Azure Verified Modules (AVM)** from the `br/public:avm/...` Bicep public registry. Do not write raw resource definitions -- use AVM modules. This ensures best practices, security defaults, and consistency. Reference: https://azure.github.io/Azure-Verified-Modules/indexes/bicep/
-- **AI resources** -- use `br/public:avm/ptn/ai-ml/ai-foundry` for Microsoft Foundry (AIServices + Project + model deployments)
-- **Monitoring** -- use `br/public:avm/ptn/azd/monitoring` for Log Analytics + Application Insights
-- **Container Apps** -- use `br/public:avm/res/app/container-app` and `br/public:avm/res/app/managed-environment`
+- **Prefer AVM modules, but do not get stuck on them in CI journey runs.** Start with Azure Verified Modules (`br/public:avm/...`) for consistency and best-practice defaults. If an AVM module blocks the run because of parameter drift, unsupported passthrough, or schema mismatch, switch that resource to raw `Microsoft.*` Bicep/ARM in the generated working directory and document why in the report. A passing, teardown-safe journey beats an elegant module that can't deploy.
+- **Scope split** -- if the journey creates its own resource group, keep `main.bicep` at subscription scope and place resources in a resource-group-scoped module such as `resources.bicep`. Do not mix resource-group resources directly into a subscription-scope file.
+- **AI resources** -- use `br/public:avm/ptn/ai-ml/ai-foundry` for Microsoft Foundry (AIServices + Project + model deployments) when the module supports the needed parameters
+- **Monitoring** -- use `br/public:avm/ptn/azd/monitoring` for Log Analytics + Application Insights when the module supports the needed parameters
+- **Container Apps** -- start with `br/public:avm/res/app/container-app` and `br/public:avm/res/app/managed-environment`; fall back to raw `Microsoft.App/containerApps` or `Microsoft.App/managedEnvironments` if AVM parameter drift blocks deployment
 - **Container Registry** -- use `br/public:avm/res/container-registry/registry`
 - **Search** -- use `br/public:avm/res/search/search-service`
 - Use `newGuid()` only as parameter defaults (Bicep limitation): `param encryptionKey string = newGuid()`

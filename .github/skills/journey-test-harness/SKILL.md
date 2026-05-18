@@ -206,6 +206,10 @@ After all journeys complete, generate a summary report and save it to the suite 
 
 Save this report to `$SUITE_DIR/test-report.md`.
 
+Timing should come from simple start/end values captured at suite setup, not shell cleverness. Avoid nested command substitution, indirect expansion, parameter transformation, and large here-doc shell commands when building the report. If markdown generation gets complex, write the report file directly instead of using a fragile one-liner.
+
+Do not call `upload-screenshots` or `upload_screenshots`; no screenshot-upload tool is available by default. Keep screenshots in `$SUITE_DIR/screenshots/` and list filenames/paths in the report unless the workflow explicitly provides a real artifact-upload step.
+
 The suite folder structure after completion:
 
 ```
@@ -225,6 +229,8 @@ The suite folder structure after completion:
 - Use `@oss-to-azure-deployer` agent flow
 - No language choice needed
 - Infrastructure is generated fresh each run
+- Prefer AVM modules, but if AVM parameter drift blocks the run, use raw `Microsoft.*` Bicep/ARM for that resource and document the reason in the report
+- If the journey creates its own resource group, split subscription-scope `main.bicep` from resource-group-scope `resources.bicep`
 - Superset uses AKS (longer deploy, ~15 min)
 
 ### Full-Stack Journeys (smart-todo, aimarket)

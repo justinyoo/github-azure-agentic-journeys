@@ -168,6 +168,8 @@ azd up
 
 This is the longest step (5-15 minutes). Monitor for errors.
 
+When generating Bicep for CI journey runs, start with AVM modules where they fit, but switch an individual resource to raw `Microsoft.*` Bicep/ARM if AVM parameter drift, unsupported passthrough, or schema mismatch blocks deployment. If the journey creates its own resource group, use a subscription-scope `main.bicep` that calls a resource-group-scope module for the actual resources.
+
 #### 4c. Post-deployment Verification
 
 Run the Verification Checklist from the README against the live deployment:
@@ -185,6 +187,7 @@ If the journey has a web frontend deployed to Azure (a `web` or `frontend` servi
 1. Get the frontend URL from azd outputs (e.g., `azd env get-value WEB_URL`)
 2. Use Playwright to navigate to the URL, wait for the page to load, and take a full-page screenshot
 3. Save the screenshot to the working directory as `screenshot-<journey-name>.png`
+4. Copy or preserve that path in the report. Do not call `upload-screenshots` or `upload_screenshots` unless the current workflow explicitly provides such a tool.
 
 ```javascript
 // Playwright screenshot capture
