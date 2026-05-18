@@ -33,6 +33,10 @@ timeout-minutes: 120
 engine:
   id: copilot
 
+strict: false
+sandbox:
+  agent: false
+
 permissions:
   contents: read
   actions: read
@@ -55,6 +59,7 @@ network:
     - azure
 
 safe-outputs:
+  threat-detection: false
   create-issue:
     title-prefix: "[Journey E2E] "
     labels: [test-report, automated]
