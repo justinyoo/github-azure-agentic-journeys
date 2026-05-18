@@ -1,6 +1,5 @@
 ---
 on:
-  schedule: weekly on monday around 6:00
   workflow_dispatch:
     inputs:
       language:
@@ -13,10 +12,17 @@ on:
           - .NET
           - Java
         default: Node.js
-      journeys:
-        description: 'Comma-separated journey names or "all"'
+      journey:
+        description: 'Journey to verify'
         required: false
-        type: string
+        type: choice
+        options:
+          - n8n
+          - grafana
+          - superset
+          - smart-todo
+          - aimarket
+          - all
         default: all
       location:
         description: 'Azure region for deployments'
@@ -26,9 +32,13 @@ on:
   reaction: "rocket"
   status-comment: true
 
-description: "End-to-end test harness that deploys every journey to Azure, verifies, screenshots, and tears down."
+description: "End-to-end test harness that deploys one selected journey to Azure, verifies, screenshots, and tears down."
 labels: ["testing", "azure", "journeys"]
 timeout-minutes: 120
+
+concurrency:
+  group: "gh-aw-${{ github.workflow }}-${{ github.event.inputs.journey || 'all' }}"
+  cancel-in-progress: false
 
 env:
   AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
@@ -67,9 +77,9 @@ network:
 safe-outputs:
   threat-detection: false
   create-issue:
-    title-prefix: "[Journey E2E] "
+    title-prefix: "[Journey E2E] ${{ github.event.inputs.journey || 'all' }} "
     labels: [test-report, automated]
-    close-older-issues: true
+    close-older-issues: false
     max: 1
   add-comment:
     max: 1
@@ -80,12 +90,12 @@ safe-outputs:
 
 # Journey End-to-End Test Harness
 
-You are the journey test harness. Your job is to run every journey in this repository end-to-end, verify it works, capture screenshots, tear down Azure resources, and produce a consolidated report.
+You are the journey test harness. Your job is to run the selected journey in this repository end-to-end, verify it works, capture screenshots, tear down Azure resources, and produce a focused report. If the selected journey is `all`, run every journey sequentially.
 
 ## Configuration
 
 - **Language**: ${{ github.event.inputs.language || 'Node.js' }}
-- **Journeys**: ${{ github.event.inputs.journeys || 'all' }}
+- **Journey**: ${{ github.event.inputs.journey || 'all' }}
 - **Location**: ${{ github.event.inputs.location || 'westus' }}
 
 ## Setup — Azure CLI and Azure Developer CLI
@@ -158,26 +168,40 @@ These are set from repository secrets and variables:
 
 ### Step 1: Create Suite Results Folder
 
-Create a top-level folder that persists across all journeys for screenshots and the final report:
+Create a top-level folder that persists across the selected journey run for screenshots and the final report:
 
 ```bash
 SUITE_DIR=~/journey-runs/test-suite-$(date +%Y%m%d-%H%M%S)
 mkdir -p "$SUITE_DIR/screenshots"
 ```
 
-### Step 2: Discover Journeys
+### Step 2: Resolve Selected Journey
 
-List all journey directories in `journeys/`:
+Resolve the selected journey from workflow input:
 
 ```bash
-ls -d journeys/*/README.md | sed 's|journeys/||;s|/README.md||' | sort
+SELECTED_JOURNEY="${{ github.event.inputs.journey || 'all' }}"
+AVAILABLE_JOURNEYS=$(ls -d journeys/*/README.md | sed 's|journeys/||;s|/README.md||' | sort)
+
+if [ "$SELECTED_JOURNEY" = "all" ]; then
+  JOURNEYS_TO_RUN="$AVAILABLE_JOURNEYS"
+elif echo "$AVAILABLE_JOURNEYS" | grep -qx "$SELECTED_JOURNEY"; then
+  JOURNEYS_TO_RUN="$SELECTED_JOURNEY"
+else
+  echo "Unknown journey: $SELECTED_JOURNEY"
+  echo "Available journeys:"
+  echo "$AVAILABLE_JOURNEYS"
+  exit 1
+fi
+
+printf 'Journeys selected for this run:\n%s\n' "$JOURNEYS_TO_RUN"
 ```
 
-If the journeys input is not "all", filter to only the requested journeys (comma-separated).
+Do not run any journey that is not listed in `$JOURNEYS_TO_RUN`.
 
-### Step 3: Run Each Journey Sequentially
+### Step 3: Run Each Selected Journey Sequentially
 
-For each journey, follow this exact sequence:
+For each journey in `$JOURNEYS_TO_RUN`, follow this exact sequence:
 
 #### 3a. Load the journey-runner skill
 
@@ -217,17 +241,17 @@ Run the journey end-to-end using the journey-runner approach:
 8. **Delete working directory**: `rm -rf $JOURNEY_DIR`
 9. **Log results**: Record pass/fail for build, deploy, verify, cleanup phases
 
-#### 3d. Clean azd state between journeys
+#### 3d. Clean azd state after each journey
 
 ```bash
 azd env list 2>/dev/null | grep -v "NAME" | awk '{print $1}' | xargs -I{} azd env delete {} --yes 2>/dev/null
 ```
 
-### Step 4: Generate Consolidated Report
+### Step 4: Generate Focused Report
 
-After all journeys complete, create a markdown report with:
+After the selected journey run completes, create a markdown report with:
 
-- Date, language, location, total duration
+- Selected journey input, date, language, location, total duration
 - Per-journey table: journey name, type (OSS/full-stack), build/deploy/verify/cleanup status, overall result
 - Summary counts: PASS / PARTIAL / FAIL / SKIPPED
 - Screenshot file list (reference `screenshots/` folder)
@@ -249,9 +273,9 @@ Suite folder structure after completion:
 
 ### Step 5: Upload Screenshots as Workflow Artifacts
 
-After all journeys complete, upload the screenshots as a workflow artifact by calling the `upload-screenshots` tool with:
+After the selected journey run completes, upload the screenshots as a workflow artifact by calling the `upload-screenshots` tool with:
 
-- `name`: `journey-screenshots`
+- `name`: `journey-screenshots-${{ github.event.inputs.journey || 'all' }}`
 - `path`: The `$SUITE_DIR/screenshots/` directory
 - `retention-days`: `90`
 
@@ -260,8 +284,8 @@ This attaches the screenshots to the workflow run itself. They auto-expire after
 ### Step 6: Create GitHub Issue
 
 Use the `create-issue` safe output to create a GitHub issue with:
-- Title: `Journey E2E Test Report — <date>`
-- Body: The consolidated report markdown from `$SUITE_DIR/test-report.md`
+- Title: `Journey E2E Test Report — ${{ github.event.inputs.journey || 'all' }} — <date>`
+- Body: The focused report markdown from `$SUITE_DIR/test-report.md`
 - Labels: `test-report`, `automated`
 
 Note: Screenshots are available as workflow artifacts (linked from the Actions run), not inline in the issue.

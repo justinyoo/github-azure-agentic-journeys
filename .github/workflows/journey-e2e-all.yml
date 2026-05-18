@@ -1,0 +1,54 @@
+name: Journey End-to-End Test All
+
+on:
+  schedule:
+    - cron: "16 5 * * 1"
+  workflow_dispatch:
+    inputs:
+      language:
+        description: "Language for full-stack journeys"
+        required: false
+        type: choice
+        options:
+          - Node.js
+          - Python
+          - .NET
+          - Java
+        default: Node.js
+      location:
+        description: "Azure region for deployments"
+        required: false
+        type: string
+        default: westus
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  dispatch:
+    name: Dispatch ${{ matrix.journey }} journey test
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        journey:
+          - n8n
+          - grafana
+          - superset
+          - smart-todo
+          - aimarket
+    steps:
+      - name: Dispatch single-journey workflow
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          JOURNEY: ${{ matrix.journey }}
+          LANGUAGE: ${{ github.event.inputs.language || 'Node.js' }}
+          LOCATION: ${{ github.event.inputs.location || 'westus' }}
+        run: |
+          gh workflow run "Journey End-to-End Test Harness" \
+            --ref "$GITHUB_REF_NAME" \
+            -f journey="$JOURNEY" \
+            -f language="$LANGUAGE" \
+            -f location="$LOCATION"
